@@ -1,0 +1,47 @@
+version: "3"
+volumes:
+  socker_volume:
+    driver: local
+    driver_opts:
+      type: none
+      o: bind
+      device: /var/run/docker.sock
+  certs:
+  vhost:
+  html:
+  acme:
+  owncloud:
+    driver: local
+
+services:
+  nginx-proxy:
+    image: jwilder/nginx-proxy
+    container_name: nginx-proxy
+    ports:
+      - 80:80
+      - 443:443
+    volumes:
+      - certs:/etc/nginx/certs
+      - vhost:/etc/nginx/vhost.d
+#      - acme:/etc/acme.sh
+      - html:/usr/share/nginx/html
+      - socker_volume:/tmp/docker.sock:ro
+#    restart: always   restart: unless-stopped
+  nginx-proxy-letsencrypt:
+    image: jrcs/letsencrypt-nginx-proxy-companion
+    container_name: nginx-proxy-letsencrypt
+    volumes:
+      - socker_volume:/var/run/docker.sock:ro
+      - acme:/etc/acme.sh
+#    restart: always
+
+  mycloud:
+    image: owncloud/server
+    container_name: mycloud
+#    volumes:
+#      - owncloud
+    environment:
+      VIRTUAL_HOST: "cloud.it-system.tk"
+      LETSENCRYPT_HOST: "cloud.it-system.tk"
+      LETSENCRYPT_EMAIL: "mail@cloud.it-system.tk"
+      OWNCLOUD_DOMAIN: "cloud.it-system.tk"
