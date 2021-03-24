@@ -1,0 +1,25 @@
+docker run -d \
+    --name nginx-proxy \
+    -p 80:80 \
+    -p 443:443 \
+    -v certs:/etc/nginx/certs \
+    -v vhost:/etc/nginx/vhost.d \
+    -v html:/usr/share/nginx/html \
+    -v /var/run/docker.sock:/tmp/docker.sock:ro \
+    jwilder/nginx-proxy
+
+docker run --detach \
+    --name nginx-proxy-letsencrypt \
+    --volumes-from nginx-proxy \
+    --volume /var/run/docker.sock:/var/run/docker.sock:ro \
+    --volume /etc/acme.sh \
+    --env "DEFAULT_EMAIL=mail@cloud.it-system.tk" \
+    jrcs/letsencrypt-nginx-proxy-companion
+
+docker run --detach \
+    --name mycloud \
+    --env "VIRTUAL_HOST=cloud.it-system.tk" \
+    --env "LETSENCRYPT_HOST=cloud.it-system.tk" \
+    --env "LETSENCRYPT_EMAIL=mail@cloud.it-system.tk" \
+    --env "OWNCLOUD_DOMAIN=cloud.it-system.tk" \
+    owncloud/server
